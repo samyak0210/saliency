@@ -41,7 +41,7 @@ def visualize_model(model, loader, device, args):
             pred_map = cv2.resize(pred_map, (sz[0], sz[1]))
             
             pred_map = torch.FloatTensor(blur(pred_map))
-            img_save(pred_map, args.results_dir + img_id[0])
+            img_save(pred_map, join(args.results_dir, img_id[0]), normalize=True)
 
 def img_save(tensor, fp, nrow=8, padding=2,
                normalize=False, range=None, scale_each=False, pad_value=0, format=None):

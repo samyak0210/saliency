@@ -109,12 +109,8 @@ def loss_func(pred_map, gt, fixations, args):
         loss += args.kldiv_coeff * kldiv(pred_map, gt)
     if args.cc:
         loss += args.cc_coeff * cc(pred_map, gt)
-    if args.nss_emlnet:
-        loss += args.nss_emlnet_coeff * nss_updated(pred_map, fixations)
     if args.nss:
         loss += args.nss_coeff * nss(pred_map, fixations)
-    if args.nss_norm:
-        loss += args.nss_norm_coeff * nss_norm(pred_map, fixations)
     if args.l1:
         loss += args.l1_coeff * criterion(pred_map, gt)
     if args.sim:
