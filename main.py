@@ -20,7 +20,7 @@ from scipy.stats import multivariate_normal
 from dataloader import SaliconDataset
 from loss import *
 import cv2
-from utils import blur
+from utils import blur, AverageMeter
 
 
 parser = argparse.ArgumentParser()
@@ -47,7 +47,7 @@ parser.add_argument('--nss_coeff',default=1.0, type=float)
 parser.add_argument('--nss_emlnet_coeff',default=1.0, type=float)
 parser.add_argument('--nss_norm_coeff',default=1.0, type=float)
 parser.add_argument('--l1_coeff',default=1.0, type=float)
-parser.add_argument('--train_enc',default=True, type=bool)
+parser.add_argument('--train_enc',default=1, type=int)
 
 parser.add_argument('--dataset_dir',default="/home/samyak/old_saliency/saliency/dataset/SALICON_NEW/", type=str)
 parser.add_argument('--batch_size',default=32, type=int)
@@ -69,22 +69,22 @@ val_fix_dir = args.dataset_dir + "fixations/fixations/"
 if args.enc_model == "pnas":
     print("PNAS Model")
     from model import PNASModel
-    model = PNASModel(train_enc=args.train_enc, load_weight=args.load_weight)
+    model = PNASModel(train_enc=bool(args.train_enc), load_weight=args.load_weight)
 
 elif args.enc_model == "densenet":
     print("DenseNet Model")
     from model import DenseModel
-    model = DenseModel(train_enc=args.train_enc, load_weight=args.load_weight)
+    model = DenseModel(train_enc=bool(args.train_enc), load_weight=args.load_weight)
 
 elif args.enc_model == "resnet":
     print("ResNet Model")
     from model import ResNetModel
-    model = ResNetModel(train_enc=args.train_enc, load_weight=args.load_weight)
+    model = ResNetModel(train_enc=bool(args.train_enc), load_weight=args.load_weight)
     
 elif args.enc_model == "vgg":
     print("VGG Model")
     from model import VGGModel
-    model = VGGModel(train_enc=args.train_enc, load_weight=args.load_weight)
+    model = VGGModel(train_enc=bool(args.train_enc), load_weight=args.load_weight)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.device_count() > 1:
@@ -142,7 +142,6 @@ def train(model, optimizer, loader, epoch, device, args):
         cur_loss += loss.item()
         
         optimizer.step()
-                
         if idx%args.log_interval==(args.log_interval-1):
             print('[{:2d}, {:5d}] avg_loss : {:.5f}, time:{:3f} minutes'.format(epoch, idx, cur_loss/args.log_interval, (time.time()-tic)/60))
             cur_loss = 0.0
@@ -157,6 +156,11 @@ def validate(model, loader, epoch, device, args):
     model.eval()
     tic = time.time()
     total_loss = 0.0
+    cc_loss = AverageMeter()
+    kldiv_loss = AverageMeter()
+    nss_loss = AverageMeter()
+    sim_loss = AverageMeter()
+    
     for (img, gt, fixations) in loader:
         img = img.to(device)
         gt = gt.to(device)
@@ -166,15 +170,17 @@ def validate(model, loader, epoch, device, args):
 
         # Blurring
         blur_map = pred_map.cpu().squeeze(0).clone().numpy()
-        blur_map = blur(blur_map).unsqueeze(0)
+        blur_map = blur(blur_map).to(device)
         
-        loss = loss_func(blur_map, gt, fixations, args)
-        total_loss += loss.item()
-        
-    print('[{:2d},   val] avg_loss : {:.5f}, time:{:3f} minutes'.format(epoch, total_loss/len(loader), (time.time()-tic)/60))
+        cc_loss.update(cc(blur_map, gt))    
+        kldiv_loss.update(kldiv(blur_map, gt))    
+        nss_loss.update(nss(blur_map, gt))    
+        sim_loss.update(similarity(blur_map, gt))    
+
+    print('[{:2d},   val] CC : {:.5f}, KLDIV : {:.5f}, NSS : {:.5f}, SIM : {:.5f}  time:{:3f} minutes'.format(epoch, cc_loss.avg, kldiv_loss.avg, nss_loss.avg, sim_loss.avg, (time.time()-tic)/60))
     sys.stdout.flush()
     
-    return total_loss/len(loader)
+    return cc_loss.avg
 
 params = list(filter(lambda p: p.requires_grad, model.parameters())) 
 
@@ -189,23 +195,21 @@ if args.lr_sched:
 
 print(device)
 
-train_loss = []
-val_loss = []
-
 for epoch in range(0, args.no_epochs):
     loss = train(model, optimizer, train_loader, epoch, device, args)
-    train_loss.append(loss)
     
     with torch.no_grad():
-        loss = validate(model, val_loader, epoch, device, args)
-        val_loss.append(loss)
+        cc_loss = validate(model, val_loader, epoch, device, args)
         if epoch == 0 :
-            best_loss = loss
-        if best_loss >= loss:
-            best_loss = loss
+            best_loss = cc_loss
+        if best_loss <= cc_loss:
+            best_loss = cc_loss
             print('[{:2d},  save, {}]'.format(epoch, args.model_val_path))
+            if torch.cuda.device_count() > 1:    
+                torch.save(model.module.state_dict(), args.model_val_path)
+            else:
+                torch.save(model.state_dict(), args.model_val_path)
         print()
 
     if args.lr_sched:
         scheduler.step()
-    torch.save(model.state_dict(), args.model_val_path+"_{}".format(epoch))

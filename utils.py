@@ -55,3 +55,23 @@ def img_save(tensor, fp, nrow=8, padding=2,
         im.save(fp, format=format, compress_level=0)
     else:
         im.save(fp, format=format, quality=100) #for jpg
+
+class AverageMeter(object):
+
+    '''Computers and stores the average and current value'''
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n = 1):
+        self.val = val
+        self.sum += val*n
+        self.count += n
+        self.avg = self.sum / self.count
