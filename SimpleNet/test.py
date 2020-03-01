@@ -26,11 +26,11 @@ from utils import *
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--val_img_dir',default="./images/", type=str)
-parser.add_argument('--model_val_path',default="./saved_models/salicon_pnas.pt", type=str)
+parser.add_argument('--val_img_dir',default="../images/", type=str)
+parser.add_argument('--model_val_path',default="../saved_models/salicon_pnas.pt", type=str)
 parser.add_argument('--no_workers',default=4, type=int)
 parser.add_argument('--enc_model',default="pnas", type=str)
-parser.add_argument('--results_dir',default="./results/", type=str)
+parser.add_argument('--results_dir',default="../results/", type=str)
 
 args = parser.parse_args()
 

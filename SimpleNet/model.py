@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import sys
-sys.path.append('./PNAS/')
+sys.path.append('../PNAS/')
 from PNASnet import *
 from genotypes import PNASNet
 
@@ -11,7 +11,7 @@ class PNASModel(nn.Module):
 
     def __init__(self, num_channels=3, train_enc=False, load_weight=1):
         super(PNASModel, self).__init__()
-        self.path = './PNAS/PNASNet-5_Large.pth'
+        self.path = '../PNAS/PNASNet-5_Large.pth'
 
         self.pnas = NetworkImageNet(216, 1001, 12, False, PNASNet)
         if load_weight:
