@@ -4,6 +4,17 @@ This repository contains Pytorch Implementation of SimpleNet and MDNSal.
 
 ## Cite
 Please cite with the following Bibtex code:
+```
+@misc{reddy2020tidying,
+    title={Tidying Deep Saliency Prediction Architectures},
+    author={Navyasri Reddy and Samyak Jain and Pradeep Yarlagadda and Vineet Gandhi},
+    year={2020},
+    eprint={2003.04942},
+    archivePrefix={arXiv},
+    primaryClass={cs.CV}
+}
+
+```
 ## Abstract
 
 Learning computational models for visual attention (saliency estimation) is an effort to inch machines/robots closer to human visual cognitive abilities. Data-driven efforts have dominated the landscape since the introduction of deep neural network architectures. In deep learning research, the choices in architecture design are often empirical and frequently lead to more complex models than necessary. The complexity, in turn, hinders the application requirements. In this paper, we identify four key components of saliency models, i.e., input features,  multi-level integration, readout architecture, and loss functions. We review the existing state of the art models on these four components and propose novel and simpler alternatives. As a result, we propose two novel end-to-end architectures called SimpleNet and MDNSal, which are neater, minimal, more interpretable and achieve state of the art performance on public saliency benchmarks. SimpleNet is an optimized encoder-decoder architecture and brings notable performance gains on the SALICON dataset (the largest saliency benchmark). MDNSal is a parametric model that directly predicts parameters of a GMM distribution and is aimed to bring more interpretability to the prediction maps. The proposed saliency models run at 25fps, making them ideal for real-time applications.
