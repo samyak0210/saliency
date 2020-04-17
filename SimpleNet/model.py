@@ -369,3 +369,86 @@ class VGGModel(nn.Module):
         assert x.size() == (batch_size, 256, 256)
         return x
 
+class MobileNetV2(nn.Module):
+
+    def __init__(self, num_channels=3, train_enc=False, load_weight=1):
+        super(MobileNetV2, self).__init__()
+
+        self.mobilenet = torch.hub.load('pytorch/vision:v0.4.0', 'mobilenet_v2', pretrained=True).features
+
+        for param in self.mobilenet.parameters():
+            param.requires_grad = train_enc
+
+        self.linear_upsampling = nn.UpsamplingBilinear2d(scale_factor=2)
+        self.conv_layer1 = self.mobilenet[:2]
+        self.conv_layer2 = self.mobilenet[2:4]
+        self.conv_layer3 = self.mobilenet[4:7]
+        self.conv_layer4 = self.mobilenet[7:14]
+        self.conv_layer5 = self.mobilenet[14:]
+
+
+        self.deconv_layer0 = nn.Sequential(
+            nn.Conv2d(in_channels = 1280, out_channels = 96, kernel_size=3, padding=1, bias = True),
+            nn.ReLU(inplace=True),
+            self.linear_upsampling
+        )
+
+        self.deconv_layer1 = nn.Sequential(
+            nn.Conv2d(in_channels = 96+96, out_channels = 32, kernel_size = 3, padding = 1, bias = True),
+            nn.ReLU(inplace=True),
+            self.linear_upsampling
+        )
+        self.deconv_layer2 = nn.Sequential(
+            nn.Conv2d(in_channels = 32+32, out_channels = 24, kernel_size = 3, padding = 1, bias = True),
+            nn.ReLU(inplace=True),
+            self.linear_upsampling
+        )
+        self.deconv_layer3 = nn.Sequential(
+            nn.Conv2d(in_channels = 24+24, out_channels = 16, kernel_size = 3, padding = 1, bias = True),
+            nn.ReLU(inplace=True),
+            self.linear_upsampling
+        )
+        self.deconv_layer4 = nn.Sequential(
+            nn.Conv2d(in_channels = 16+16, out_channels = 16, kernel_size = 3, padding = 1, bias = True),
+            nn.ReLU(inplace=True),
+            self.linear_upsampling
+        )
+        self.deconv_layer5 = nn.Sequential(
+            nn.Conv2d(in_channels = 16, out_channels = 16, kernel_size = 3, padding = 1, bias = True),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels = 16, out_channels = 1, kernel_size = 3, padding = 1, bias = True),
+            nn.Sigmoid()
+        )
+
+    def forward(self, images):
+        batch_size = images.size(0)
+
+        out1 = self.conv_layer1(images)
+        out2 = self.conv_layer2(out1)
+        out3 = self.conv_layer3(out2)
+        out4 = self.conv_layer4(out3)
+        out5 = self.conv_layer5(out4)
+
+        
+        assert out1.size() == (batch_size, 16, 128, 128)
+        assert out2.size() == (batch_size, 24, 64, 64)
+        assert out3.size() == (batch_size, 32, 32, 32)
+        assert out4.size() == (batch_size, 96, 16, 16)
+        assert out5.size() == (batch_size, 1280, 8, 8)
+
+        out5 = self.deconv_layer0(out5)
+
+        x = torch.cat((out5,out4), 1)
+        x = self.deconv_layer1(x)
+
+        x = torch.cat((x,out3), 1)
+        x = self.deconv_layer2(x)
+
+        x = torch.cat((x,out2), 1)
+        x = self.deconv_layer3(x)
+        
+        x = torch.cat((x,out1), 1)
+        x = self.deconv_layer4(x)
+        x = self.deconv_layer5(x)
+        x = x.squeeze(1)
+        return x

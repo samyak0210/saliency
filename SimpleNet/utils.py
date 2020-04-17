@@ -77,3 +77,13 @@ class AverageMeter(object):
         self.sum += val*n
         self.count += n
         self.avg = self.sum / self.count
+
+def im2heat(pred_dir, a, gt, exten='.png'):
+    pred_nm = pred_dir + a + exten
+    pred = cv2.imread(pred_nm, 0)
+    heatmap_img = cv2.applyColorMap(pred, cv2.COLORMAP_JET)
+    heatmap_img = convert(heatmap_img)
+    pred = np.stack((pred, pred, pred),2).astype('float32')
+    pred = pred / 255.0
+    
+    return np.uint8(pred * heatmap_img + (1.0-pred) * gt)

@@ -24,7 +24,7 @@ from utils import blur, AverageMeter
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--no_epochs',default=20, type=int)
+parser.add_argument('--no_epochs',default=40, type=int)
 parser.add_argument('--lr',default=1e-4, type=float)
 parser.add_argument('--kldiv',default=True, type=bool)
 parser.add_argument('--cc',default=False, type=bool)
@@ -49,7 +49,7 @@ parser.add_argument('--nss_norm_coeff',default=1.0, type=float)
 parser.add_argument('--l1_coeff',default=1.0, type=float)
 parser.add_argument('--train_enc',default=1, type=int)
 
-parser.add_argument('--dataset_dir',default="/home/samyak/old_saliency/saliency/dataset/SALICON_NEW/", type=str)
+parser.add_argument('--dataset_dir',default="/home/samyak/old_saliency/saliency/SALICON_NEW/", type=str)
 parser.add_argument('--batch_size',default=32, type=int)
 parser.add_argument('--log_interval',default=60, type=int)
 parser.add_argument('--no_workers',default=4, type=int)
@@ -86,6 +86,11 @@ elif args.enc_model == "vgg":
     from model import VGGModel
     model = VGGModel(train_enc=bool(args.train_enc), load_weight=args.load_weight)
 
+elif args.enc_model == "mobilenet":
+    print("Mobile NetV2")
+    from model import MobileNetV2
+    model = MobileNetV2(train_enc=bool(args.train_enc), load_weight=args.load_weight)
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 if torch.cuda.device_count() > 1:
 	print("Let's use", torch.cuda.device_count(), "GPUs!")
@@ -99,7 +104,7 @@ train_dataset = SaliconDataset(train_img_dir, train_gt_dir, train_fix_dir, train
 val_dataset = SaliconDataset(val_img_dir, val_gt_dir, val_fix_dir, val_img_ids)
 
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.no_workers)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.no_workers)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=args.no_workers)
 
 
 def loss_func(pred_map, gt, fixations, args):
@@ -166,7 +171,7 @@ def validate(model, loader, epoch, device, args):
 
         # Blurring
         blur_map = pred_map.cpu().squeeze(0).clone().numpy()
-        blur_map = blur(blur_map).to(device)
+        blur_map = blur(blur_map).unsqueeze(0).to(device)
         
         cc_loss.update(cc(blur_map, gt))    
         kldiv_loss.update(kldiv(blur_map, gt))    

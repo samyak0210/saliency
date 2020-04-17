@@ -19,7 +19,7 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 from scipy.stats import multivariate_normal
-from dataloader import TestLoader
+from dataloader import TestLoader, SaliconDataset
 from loss import *
 from tqdm import tqdm
 from utils import *
@@ -31,6 +31,9 @@ parser.add_argument('--model_val_path',default="../saved_models/salicon_pnas.pt"
 parser.add_argument('--no_workers',default=4, type=int)
 parser.add_argument('--enc_model',default="pnas", type=str)
 parser.add_argument('--results_dir',default="../results/", type=str)
+parser.add_argument('--validate',default=1, type=int)
+parser.add_argument('--save_results',default=1, type=int)
+parser.add_argument('--dataset_dir',default="/home/samyak/old_saliency/saliency/SALICON_NEW/", type=str)
 
 args = parser.parse_args()
 
@@ -57,12 +60,58 @@ elif args.enc_model == "vgg":
     from model import VGGModel
     model = VGGModel()
 
+elif args.enc_model == "mobilenet":
+    print("Mobile NetV2")
+    from model import MobileNetV2
+    model = MobileNetV2()
+
+model.load_state_dict(torch.load(args.model_val_path))
 model = nn.DataParallel(model)
 model = model.to(device)
-model.load_state_dict(torch.load(args.model_val_path))
 
 val_img_ids = os.listdir(args.val_img_dir)
 val_dataset = TestLoader(args.val_img_dir, val_img_ids)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=args.no_workers)
+vis_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=args.no_workers)
 
-visualize_model(model, val_loader, device, args)
+def validate(model, loader, device, args):
+    model.eval()
+    tic = time.time()
+    total_loss = 0.0
+    cc_loss = AverageMeter()
+    kldiv_loss = AverageMeter()
+    nss_loss = AverageMeter()
+    sim_loss = AverageMeter()
+    
+    for (img, gt, fixations) in tqdm(loader):
+        img = img.to(device)
+        gt = gt.to(device)
+        fixations = fixations.to(device)
+        
+        pred_map = model(img)
+
+        # Blurring
+        blur_map = pred_map.cpu().squeeze(0).clone().numpy()
+        blur_map = blur(blur_map).unsqueeze(0).to(device)
+        
+        cc_loss.update(cc(blur_map, gt))    
+        kldiv_loss.update(kldiv(blur_map, gt))    
+        nss_loss.update(nss(blur_map, gt))    
+        sim_loss.update(similarity(blur_map, gt))    
+
+    print('CC : {:.5f}, KLDIV : {:.5f}, NSS : {:.5f}, SIM : {:.5f}  time:{:3f} minutes'.format(cc_loss.avg, kldiv_loss.avg, nss_loss.avg, sim_loss.avg, (time.time()-tic)/60))
+    sys.stdout.flush()
+    
+    return cc_loss.avg
+
+if args.validate:
+	val_img_dir = args.dataset_dir + "images/val/"
+	val_gt_dir = args.dataset_dir + "maps/val/"
+	val_fix_dir = args.dataset_dir + "fixations/fixations/"
+
+	val_img_ids = [nm.split(".")[0] for nm in os.listdir(val_img_dir)]
+	val_dataset = SaliconDataset(val_img_dir, val_gt_dir, val_fix_dir, val_img_ids)
+	val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=args.no_workers)
+	with torch.no_grad():
+		validate(model, val_loader, device, args)
+if args.save_results:
+	visualize_model(model, vis_loader, device, args)
