@@ -31,7 +31,7 @@ parser.add_argument('--model_val_path',default="../saved_models/salicon_pnas.pt"
 parser.add_argument('--no_workers',default=4, type=int)
 parser.add_argument('--enc_model',default="pnas", type=str)
 parser.add_argument('--results_dir',default="../results/", type=str)
-parser.add_argument('--validate',default=1, type=int)
+parser.add_argument('--validate',default=0, type=int)
 parser.add_argument('--save_results',default=1, type=int)
 parser.add_argument('--dataset_dir',default="/home/samyak/old_saliency/saliency/SALICON_NEW/", type=str)
 
@@ -65,8 +65,10 @@ elif args.enc_model == "mobilenet":
     from model import MobileNetV2
     model = MobileNetV2()
 
+if args.enc_model!="mobilenet":
+    model = nn.DataParallel(model)
 model.load_state_dict(torch.load(args.model_val_path))
-model = nn.DataParallel(model)
+
 model = model.to(device)
 
 val_img_ids = os.listdir(args.val_img_dir)
