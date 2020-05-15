@@ -54,11 +54,11 @@ def visualize_model(model, loader, device, args):
             exten = join(args.heatmap_dir, img_id[0]).split('.')[-1]
             if exten == "png":
                 im.save(join(args.heatmap_dir,
-                             img_id[0]), format=format, compress_level=0)
+                             img_id[0]), format=None, compress_level=0)
             else:
                 # for jpg
                 im.save(join(args.heatmap_dir,
-                             img_id[0]), format=format, quality=100)
+                             img_id[0]), format=None, quality=100)
 
 
 def img_save(tensor, fp, nrow=8, padding=2,
