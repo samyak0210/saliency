@@ -25,7 +25,7 @@ SimpleNet Architecture
 MDNSal Architecture
 ![](./extras/MDNSal.png)
 ## Testing
-Clone this repository and download the pretrained weights of SimpleNet, for multiple encoders, trained on SALICON dataset from this [link](https://iiitaphyd-my.sharepoint.com/:u:/g/personal/samyak_j_research_iiit_ac_in/Eddzj58KvrhFtb6XinOFkhMBn8uFapCnOM6Ia0K1jFJhqw).
+Clone this repository and download the pretrained weights of SimpleNet, for multiple encoders, trained on SALICON dataset from this [link](https://iiitaphyd-my.sharepoint.com/:u:/g/personal/samyak_j_research_iiit_ac_in/Eddzj58KvrhFtb6XinOFkhMBn8uFapCnOM6Ia0K1jFJhqw). The trained weights for MobileNetV2 can be found [here](https://iiitaphyd-my.sharepoint.com/:u:/g/personal/samyak_j_research_iiit_ac_in/EbTtjiuphdVIhzMtLddCgKkBbRSbS5lPFh7_cbvYjjr7Uw?e=levugK).
 
 Then just run the code using 
 ```bash
