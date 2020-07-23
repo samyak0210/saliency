@@ -1,6 +1,6 @@
 # Tidying Deep Saliency Prediction Architectures
 
-This repository contains Pytorch Implementation of SimpleNet and MDNSal. 
+This repository contains Pytorch Implementation of SimpleNet and MDNSal. Appearing in the proceedings of the 21st International Conference on Intelligent Robots and Systems (IROS).
 
 ## Cite
 Please cite with the following Bibtex code:
