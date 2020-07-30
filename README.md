@@ -5,13 +5,11 @@ This repository contains Pytorch Implementation of SimpleNet and MDNSal. Appeari
 ## Cite
 Please cite with the following Bibtex code:
 ```
-@misc{reddy2020tidying,
-    title={Tidying Deep Saliency Prediction Architectures},
-    author={Navyasri Reddy and Samyak Jain and Pradeep Yarlagadda and Vineet Gandhi},
-    year={2020},
-    eprint={2003.04942},
-    archivePrefix={arXiv},
-    primaryClass={cs.CV}
+@inproceedings{Navya-IROS-2020, 
+               AUTHOR = {Navyasri Reddy, Samyak Jain, Pradeep Yarlagadda, Vineet Gandhi}, 
+               TITLE = {Tidying Deep Saliency Prediction Architectures}, 
+               BOOKTITLE = {IROS}, 
+               YEAR = {2020}
 }
 ```
 ## Abstract
