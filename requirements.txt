@@ -54,7 +54,7 @@ kiwisolver==1.0.1
 language-selector==0.1
 llvmlite==0.29.0
 louis==2.6.4
-lxml==3.5.0
+lxml==4.6.2
 Magic-file-extensions==0.2
 Mako==1.0.3
 Markdown==3.1
