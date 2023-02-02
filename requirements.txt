@@ -166,7 +166,7 @@ usb-creator==0.3.0
 virtualenv==15.0.1
 wcwidth==0.1.7
 webencodings==0.5.1
-Werkzeug==0.15.1
+Werkzeug==0.15.5
 widgetsnbextension==3.4.2
 wordcloud==1.7.0
 xdiagnose==3.8.4.1
